@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biopathogenix qPCR Analyzer</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/regression/2.0.1/regression.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+
+</head>
+
+<body>
+    <div class="dashboard-container">
+
+        <div class="sidebar">
+             <h2>Controls</h2>
+             <div class="sidebar-group">
+                 <label for="csvFileInput">1. Upload Data:</label>
+                 <input type="file" id="csvFileInput" accept=".csv" />
+             </div>
+             <div class="sidebar-group">
+                 <label for="sampleSelector">2. Select Sample(s):</label>
+                 <select id="sampleSelector" disabled multiple></select>
+             </div>
+             <div class="sidebar-group">
+                 <label for="targetSelector">3. Select Target(s):</label>
+                 <select id="targetSelector" disabled multiple></select>
+             </div>
+             <div class="sidebar-group">
+                 <fieldset>
+                     <legend>4. Options</legend>
+                      <div>
+                         <label><strong>Plot Type:</strong></label><br>
+                         <input type="radio" id="plotTypeAvg" name="plotType" value="average" checked />
+                         <label for="plotTypeAvg">Average Curve</label><br> <input type="radio" id="plotTypeAll" name="plotType" value="all" />
+                         <label for="plotTypeAll">All Replicates</label><br>
+                         <input type="radio" id="plotTypeOne" name="plotType" value="one" />
+                         <label for="plotTypeOne">One Replicate</label><br>
+                     </div>
+                     <hr>
+                     <div>
+                         <input type="checkbox" id="showStdDev" disabled/> <label for="showStdDev">Show Std. Dev</label><br>
+                         <input type="checkbox" id="showCt" />
+                         <label for="showCt">Show Ct Lines</label><br>
+                         <label for="ctThreshold">dRn Threshold:</label>
+                         <input type="number" id="ctThreshold" value="1000" step="100" /><br>
+                         <input type="checkbox" id="filterByCtCheck" />
+                         <label for="filterByCtCheck">Filter by Ct &lt; 35</label>
+                     </div>
+                 </fieldset>
+             </div>
+             <div class="sidebar-group">
+                 <fieldset>
+                     <legend>5. Layout & Appearance</legend>
+                      <label for="plotWidthInput">Plot Width (%):</label>
+                     <input type="number" id="plotWidthInput" value="60" min="50" max="150" /><br>
+                      <label for="plotHeightInput">Subplot Height (px):</label> <input type="number" id="plotHeightInput" value="450" min="200" max="1200" /><br>
+                      <label for="fontSizeInput">Font Size:</label>
+                     <input type="number" id="fontSizeInput" value="12" /><br>
+                      <label for="yMinInput">Y-axis Min:</label>
+                     <input type="number" id="yMinInput" placeholder="auto"/><br> <label for="yMaxInput">Y-axis Max:</label>
+                     <input type="number" id="yMaxInput" placeholder="auto"/><br> </fieldset>
+             </div>
+             <button id="downloadPlotBtn" disabled>Download Main Plot as PNG</button>
+        </div>
+
+        <div class="main-panel">
+
+            <div id="welcomeBoard">
+                 <img src="https://biopathogenix.com/wp-content/uploads/2021/07/BioPathogenix-Horizontal-1.svg" alt="Logo" width="400">
+                <h2>Welcome to the qPCR Data Analyzer</h2>
+                <p>To begin, please upload a .csv file using the controls in the sidebar.</p>
+            </div>
+
+            <div id="mainContent" style="display: none;">
+                <div class="tab-bar">
+                    <button class="tab-button active" data-tab="plotTab">Plots</button>
+                    <button class="tab-button" data-tab="tableTab">Summary Table</button>
+                    <button class="tab-button" data-tab="linearityTab">Linearity Plot</button>
+                    <button class="tab-button" data-tab="precisionTab">Precision Analysis</button>
+                </div>
+
+                <div id="plotTab" class="tab-content active">
+                    <div id="plotDiv"></div>
+                </div>
+
+                <div id="tableTab" class="tab-content">
+                    <div id="summaryTableDiv"></div>
+                </div>
+
+                <div id="linearityTab" class="tab-content">
+                    <div class="tab-controls">
+                        <label for="linearityTargetSelect">Select Target:</label>
+                        <select id="linearityTargetSelect"></select>
+                        <button id="downloadLinearityPlotBtn" class="tab-download-btn">Download Plot</button>
+                    </div>
+                    <div id="linearityPlotDiv"></div>
+                </div>
+
+                <div id="precisionTab" class="tab-content">
+                    <div class="tab-controls">
+                        <strong>Plot Type:</strong>
+                        <input type="radio" id="precisionPlotBox" name="precisionPlotType" value="boxplot" checked />
+                        <label for="precisionPlotBox">Boxplot</label>
+                        <input type="radio" id="precisionPlotBland" name="precisionPlotType" value="bland-altman" />
+                        <label for="precisionPlotBland">Bland-Altman</label>
+                        <button id="downloadPrecisionPlotBtn" class="tab-download-btn">Download Plot</button>
+                    </div>
+                    <p class="plot-note">This plot shows data for the Samples and Targets currently selected in the sidebar.</p>
+                    <div id="precisionPlotDiv"></div>
+
+                    <hr class="section-divider">
+                    <h3>Replicate Ct Data</h3>
+                    <div class="tab-controls">
+                       <button id="downloadPrecisionTableBtn" class="tab-download-btn">Download Table</button>
+                    </div>
+                    <div id="precisionTableDiv"></div>
+                    </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

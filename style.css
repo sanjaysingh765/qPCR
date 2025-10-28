@@ -1,0 +1,226 @@
+/* --- Global Styles & Fonts --- */
+:root {
+  --primary-color: #0056b3; /* A slightly softer blue */
+  --secondary-color: #f8f9fa;
+  --border-color: #dee2e6;
+  --text-color: #212529;
+  --light-text-color: #6c757d;
+  --hover-bg-color: #e9ecef;
+  --active-bg-color: #dde8f5;
+  --button-primary-bg: #007bff;
+  --button-primary-hover: #0056b3;
+  --button-secondary-bg: #6c757d;
+  --button-secondary-hover: #5a6268;
+  --success-color: #28a745;
+  --success-hover: #218838;
+  /* *** UPDATED: Sidebar background color *** */
+  --sidebar-bg: #5279e6; /* Royal Blue */
+  --sidebar-text: #ffffff; /* White text for contrast */
+  --sidebar-border: #648de5; /* Lighter blue for borders */
+  --sidebar-header-border: #ffffff; /* White border for header */
+  --fieldset-sidebar-bg: #5a82e7; /* Slightly lighter blue for fieldsets */
+}
+
+html, body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Cleaner font */
+  line-height: 1.6;
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-size: 14px; /* Slightly smaller base font */
+}
+
+/* --- Dashboard Layout --- */
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+}
+
+/* --- Sidebar Styling --- */
+.sidebar {
+  width: 350px;
+  flex-shrink: 0;
+  /* *** Uses the updated background color *** */
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text); /* Set default text color for sidebar */
+  border-right: 1px solid var(--border-color);
+  padding: 25px;
+  overflow-y: auto;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Slightly stronger shadow */
+}
+
+.sidebar h2 {
+    color: var(--sidebar-text); /* White header text */
+    border-bottom: 2px solid var(--sidebar-header-border); /* White border */
+    padding-bottom: 10px; margin-top: 0; font-size: 1.5em; font-weight: 600;
+}
+.sidebar-group { margin-bottom: 25px; }
+.sidebar-group label:not([for^="plotType"]):not([for^="show"]):not([for^="filter"]) {
+    display: block; font-weight: 600; margin-bottom: 8px; font-size: 1.1em;
+    color: var(--sidebar-text); /* White label text */
+    opacity: 0.9; /* Slightly transparent */
+ }
+
+/* Inputs in sidebar */
+input[type="file"], .sidebar select[multiple], .sidebar input[type="number"] {
+    margin-bottom: 5px;
+    background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent white bg */
+    border: 1px solid var(--sidebar-border); /* Lighter blue border */
+    color: var(--text-color); /* Dark text inside inputs */
+}
+
+input[type="file"] { width: 100%; font-size: 0.9em; padding: 8px; border-style: dashed; border-radius: 4px; }
+.sidebar-group select[multiple] { width: 100%; height: 150px; padding: 8px; border-radius: 4px; }
+.sidebar-group select[multiple]:disabled { background-color: rgba(233, 236, 239, 0.7); cursor: not-allowed; } /* More transparent disabled */
+
+/* Fieldsets in sidebar */
+.sidebar-group fieldset {
+    border: 1px solid var(--sidebar-border); /* Lighter blue border */
+    border-radius: 5px; padding: 15px;
+    background-color: var(--fieldset-sidebar-bg); /* Slightly lighter blue background */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1) inset;
+}
+.sidebar-group legend {
+    font-weight: 600; padding: 0 8px;
+    color: var(--sidebar-text); /* White legend */
+    font-size: 1.1em; background-color: var(--sidebar-bg); /* Match sidebar bg */ border-radius: 3px;
+ }
+
+/* Labels and inputs within fieldsets */
+.sidebar-group fieldset div, .sidebar-group fieldset label[for="ctThreshold"], .sidebar-group fieldset label[for="plotWidthInput"], .sidebar-group fieldset label[for="plotHeightInput"], .sidebar-group fieldset label[for="fontSizeInput"], .sidebar-group fieldset label[for="yMinInput"], .sidebar-group fieldset label[for="yMaxInput"] { display: block; margin-bottom: 10px; }
+.sidebar-group fieldset label {
+    font-weight: normal;
+    color: var(--sidebar-text); /* White labels */
+    opacity: 0.95;
+}
+.sidebar-group fieldset input[type="radio"] + label, .sidebar-group fieldset input[type="checkbox"] + label { margin-left: 5px; font-weight: normal; }
+.sidebar-group fieldset input[type="number"] { width: 70px; padding: 6px 8px; margin-left: 10px; border-radius: 4px; }
+.sidebar-group fieldset label[for="ctThreshold"], .sidebar-group fieldset label[for^="plot"], .sidebar-group fieldset label[for^="font"], .sidebar-group fieldset label[for^="y"] { display: inline-block; width: 130px; font-weight: 500; }
+.sidebar-group fieldset hr { border: none; border-top: 1px solid var(--sidebar-border); margin: 15px 0; } /* Lighter blue hr */
+
+/* Download button in sidebar */
+#downloadPlotBtn { font-size: 1em; font-weight: 600; padding: 10px 15px; color: var(--primary-color); background-color: #ffffff; /* White button */ border: 1px solid var(--primary-color); border-radius: 4px; cursor: pointer; width: 100%; transition: background-color 0.2s ease, color 0.2s ease; }
+#downloadPlotBtn:disabled { background-color: #adb5bd; color: #fff; border-color: #adb5bd; cursor: not-allowed; opacity: 0.7; }
+#downloadPlotBtn:hover:not(:disabled) { background-color: var(--primary-color); color: #ffffff; }
+
+/* --- Main Panel Styling --- */
+.main-panel {
+  flex-grow: 1;
+  padding: 30px;
+  overflow-y: auto;
+  min-width: 500px;
+  background-color: var(--secondary-color); /* Ensure main panel bg is light */
+}
+#plotDiv, #linearityPlotDiv, #precisionPlotDiv {
+  margin: 0 auto;
+   background-color: #fff; /* White background for plots */
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  box-shadow: var(--box-shadow);
+}
+
+/* --- Tab Bar Styling --- */
+.tab-bar { border-bottom: 1px solid var(--border-color); margin-bottom: 25px; }
+.tab-button { padding: 12px 20px; font-size: 1.1em; cursor: pointer; border: none; background-color: transparent; border-bottom: 3px solid transparent; color: var(--light-text-color); transition: all 0.2s ease; margin-right: 5px; border-radius: 4px 4px 0 0; }
+.tab-button.active { font-weight: 600; color: var(--primary-color); border-bottom-color: var(--primary-color); background-color: #fff; }
+.tab-button:hover:not(.active) { background-color: var(--hover-bg-color); color: var(--primary-color); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* --- Summary & Precision Table Styling --- */
+#summaryTableDiv table,
+#precisionTableDiv table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 0.95em;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  background-color: #fff;
+  border-radius: 5px;
+  overflow: hidden;
+}
+#summaryTableDiv th, #summaryTableDiv td,
+#precisionTableDiv th, #precisionTableDiv td {
+  border: 1px solid var(--border-color);
+  padding: 10px 12px;
+  text-align: left;
+  border-width: 0 0 1px 0;
+}
+#summaryTableDiv th,
+#precisionTableDiv th {
+  background-color: #e9ecef;
+  font-weight: 600;
+  color: #495057;
+  border-bottom-width: 2px;
+}
+#summaryTableDiv td:not(:first-child), #summaryTableDiv th:not(:first-child),
+#precisionTableDiv td:not(:first-child), #precisionTableDiv th:not(:first-child) {
+  border-left: none;
+}
+#summaryTableDiv tr:last-child td,
+#precisionTableDiv tr:last-child td {
+    border-bottom: none;
+}
+#summaryTableDiv tr:nth-child(even),
+#precisionTableDiv tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+#summaryTableDiv tr:hover,
+#precisionTableDiv tr:hover {
+  background-color: var(--hover-bg-color);
+}
+
+/* --- Welcome Board Style --- */
+#welcomeBoard { text-align: center; padding-top: 80px; }
+#welcomeBoard img { max-width: 400px; opacity: 0.6; margin-bottom: 20px; }
+#welcomeBoard h2 { color: #343a40; font-weight: 400; font-size: 1.8em; margin-bottom: 10px; }
+#welcomeBoard p { font-size: 1.1em; color: var(--light-text-color); }
+
+/* --- Tab Content Styles --- */
+.tab-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px 25px;
+  margin-bottom: 20px;
+  padding: 15px 20px;
+  background-color: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  box-shadow: var(--box-shadow);
+}
+.tab-controls strong { font-weight: 600; margin-right: 5px;}
+.tab-controls label:not([for^="precisionPlot"]) { font-weight: 600; }
+.tab-controls label[for^="precisionPlot"] { font-weight: normal; margin-left: 3px; }
+.tab-controls select, .tab-controls input[type="radio"] { margin-right: 5px; }
+.tab-controls select { padding: 8px 12px; font-size: 1em; border-radius: 4px; border: 1px solid var(--input-border); min-width: 200px; }
+.tab-download-btn {
+  margin-left: auto;
+  padding: 9px 14px;
+  font-weight: 600;
+  font-size: 0.95em;
+  color: #fff;
+  background-color: var(--success-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+.tab-download-btn:hover { background-color: var(--success-hover); transform: translateY(-1px); }
+.tab-download-btn:active { transform: translateY(0px); }
+
+.plot-note { font-style: italic; color: var(--light-text-color); font-size: 0.9em; padding-left: 10px; margin-top: -10px; margin-bottom: 20px; }
+#linearityPlotDiv, #precisionPlotDiv { width: 100%; min-height: 500px; margin: 0 auto; }
+
+/* --- Divider style --- */
+hr.section-divider {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 35px 0;
+}
+
+/* --- Plotly Specific Tweaks --- */
+.plotly .legend { font-size: 0.95em !important; background-color: rgba(255, 255, 255, 0.8) !important; border-radius: 4px; border: 1px solid #eee !important;}
+.plotly .annotation text { font-family: 'Inter', sans-serif !important; }
