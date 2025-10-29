@@ -14,11 +14,11 @@
   --success-color: #28a745;
   --success-hover: #218838;
   /* *** UPDATED: Sidebar background color *** */
-  --sidebar-bg: #5279e6; /* Royal Blue */
+  --sidebar-bg: #1a3b69; /* Royal Blue */
   --sidebar-text: #ffffff; /* White text for contrast */
   --sidebar-border: #648de5; /* Lighter blue for borders */
   --sidebar-header-border: #ffffff; /* White border for header */
-  --fieldset-sidebar-bg: #5a82e7; /* Slightly lighter blue for fieldsets */
+  --fieldset-sidebar-bg: #1a3b69; /* Slightly lighter blue for fieldsets */
 }
 
 html, body {
@@ -223,4 +223,5 @@ hr.section-divider {
 
 /* --- Plotly Specific Tweaks --- */
 .plotly .legend { font-size: 0.95em !important; background-color: rgba(255, 255, 255, 0.8) !important; border-radius: 4px; border: 1px solid #eee !important;}
+
 .plotly .annotation text { font-family: 'Inter', sans-serif !important; }
