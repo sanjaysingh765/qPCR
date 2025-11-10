@@ -1,3 +1,4 @@
+<script>
 document.addEventListener("DOMContentLoaded", () => {
     console.log("DEBUG: DOM Loaded. Initializing app...");
 
@@ -12,6 +13,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const showCtCheck = document.getElementById('showCt');
     const ctThresholdInput = document.getElementById('ctThreshold');
     const filterByCtCheck = document.getElementById('filterByCtCheck');
+
+    // NEW: require ≥2 replicate positives checkbox (may be injected later)
+    let requireTwoRepCheck = document.getElementById('requireTwoRepCheck');
+
     const plotWidthInput = document.getElementById('plotWidthInput');
     const plotHeightInput = document.getElementById('plotHeightInput');
     const fontSizeInput = document.getElementById('fontSizeInput');
@@ -35,6 +40,56 @@ document.addEventListener("DOMContentLoaded", () => {
     let fullData = [];
     let allSummaryData = []; // Store summary data globally
     let currentFilteredSummaryData = []; // Store filtered summary data for precision table download
+
+    // ---- Helper to ensure the new checkbox exists (auto-inject if missing) ----
+    function ensureRequireTwoRepCheckbox() {
+        try {
+            if (!requireTwoRepCheck) {
+                // Find a sensible place to insert next to the Ct filter checkbox
+                // Will try: same parent as filterByCtCheck, else near ctThresholdInput, else mainContent.
+                const container =
+                    (filterByCtCheck && filterByCtCheck.parentElement) ||
+                    (ctThresholdInput && ctThresholdInput.parentElement) ||
+                    document.getElementById('controlsContainer') ||
+                    document.getElementById('sidebarControls') ||
+                    mainContent || document.body;
+
+                const wrapper = document.createElement('label');
+                wrapper.style.display = 'inline-flex';
+                wrapper.style.alignItems = 'center';
+                wrapper.style.gap = '6px';
+                wrapper.style.marginLeft = '8px';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = 'requireTwoRepCheck';
+                checkbox.name = 'requireTwoRepCheck';
+                checkbox.checked = true; // default ON
+
+                const span = document.createElement('span');
+                span.textContent = 'Require ≥2 positive replicates';
+
+                wrapper.appendChild(checkbox);
+                wrapper.appendChild(span);
+
+                // place right after the Ct filter checkbox if we can
+                if (filterByCtCheck && filterByCtCheck.parentElement) {
+                    filterByCtCheck.parentElement.appendChild(wrapper);
+                } else {
+                    container.appendChild(wrapper);
+                }
+
+                requireTwoRepCheck = checkbox;
+                // Wire listener to trigger re-render when toggled
+                requireTwoRepCheck.addEventListener('change', () => updateOutputs('requireTwoRepCheck toggle'));
+            }
+        } catch (e) {
+            console.warn('Could not ensure Require ≥2 checkbox:', e);
+        }
+    }
+
+    // Make sure the UI toggle exists before wiring other listeners
+    ensureRequireTwoRepCheckbox();
 
     // --- 2. ADD EVENT LISTENERS ---
     if (fileInput) {
@@ -90,13 +145,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Generic control listeners (with defensive checks)
     [
         sampleSelect, targetSelect, showStdDevCheck, showCtCheck,
-        ctThresholdInput, filterByCtCheck, plotWidthInput,
-        plotHeightInput, fontSizeInput, yMinInput, yMaxInput
+        ctThresholdInput, filterByCtCheck, requireTwoRepCheck,
+        plotWidthInput, plotHeightInput, fontSizeInput, yMinInput, yMaxInput
     ].forEach(el => {
-        if (!el) {
-            // Note: do not spam console — just flag missing controls
-            return;
-        }
+        if (!el) return;
         const eventType = (el.type === 'number' || el.tagName === 'SELECT') ? 'input' : 'change';
         el.addEventListener(eventType, (e) => {
             const controlId = e.target.id || e.target.name;
@@ -126,73 +178,30 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // download main plot
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', () => {
-            try {
-                const plotWidth = plotDiv ? plotDiv.clientWidth : 1000;
-                const plotHeight = plotDiv ? plotDiv.clientHeight : 600;
-                Plotly.downloadImage('plotDiv', { format: 'png', width: plotWidth, height: plotHeight, filename: `qPCR_Plot_Export.png` });
-            } catch (e) {
-                console.error("Error downloading main plot:", e);
-                alert("Unable to download plot. Check console.");
+    // --- Ensure showStdDev availability matches "average" plot type ---
+    function syncShowStdDevState() {
+        try {
+            const checked = document.querySelector('input[name="plotType"]:checked');
+            const plotType = checked ? checked.value : 'average';
+            if (showStdDevCheck) {
+                showStdDevCheck.disabled = (plotType !== 'average');
+                if (plotType !== 'average') showStdDevCheck.checked = false;
             }
-        });
+        } catch (e) {
+            console.warn('Could not sync showStdDev state', e);
+        }
     }
-
-    // tab switching
-    if (tabButtons && tabButtons.length > 0 && tabContents) {
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                tabContents.forEach(content => content.classList.remove('active'));
-                button.classList.add('active');
-                const activeTab = document.getElementById(button.dataset.tab);
-                if (activeTab) activeTab.classList.add('active');
-
-                if (button.dataset.tab === 'linearityTab') { renderLinearityPlot(); }
-                else if (button.dataset.tab === 'precisionTab') { renderPrecisionPlot(); renderPrecisionSummaryTable(); }
-                else if (button.dataset.tab === 'plotTab') { updateOutputs('Tab Switch to plotTab'); }
+    syncShowStdDevState();
+    if (plotTypeRadios && plotTypeRadios.length > 0) {
+        plotTypeRadios.forEach(radio => {
+            radio.removeEventListener?.('change', () => {});
+            radio.addEventListener('change', (e) => {
+                console.log('DEBUG: plotType changed ->', e.target.value);
+                syncShowStdDevState();
+                updateOutputs('plotType change');
             });
         });
     }
-
-
-// --- Ensure showStdDev is correctly enabled only for Average plot type and force re-render on change ---
-
-// helper to set showStdDev availability based on current plot type
-function syncShowStdDevState() {
-    try {
-        const checked = document.querySelector('input[name="plotType"]:checked');
-        const plotType = checked ? checked.value : 'average';
-        if (showStdDevCheck) {
-            // enable only for average mode
-            showStdDevCheck.disabled = (plotType !== 'average');
-            if (plotType !== 'average') showStdDevCheck.checked = false;
-        }
-    } catch (e) {
-        console.warn('Could not sync showStdDev state', e);
-    }
-}
-
-// run once on startup to set correct initial state
-syncShowStdDevState();
-
-// attach change listeners to the plot type radios so they update UI and re-render immediately
-if (plotTypeRadios && plotTypeRadios.length > 0) {
-    plotTypeRadios.forEach(radio => {
-        radio.removeEventListener?.('change', () => {}); // defensive no-op (safe if removeEventListener not supported)
-        radio.addEventListener('change', (e) => {
-            console.log('DEBUG: plotType changed ->', e.target.value);
-            syncShowStdDevState();      // enable/disable stddev checkbox
-            updateOutputs('plotType change'); // re-render using the new plot type
-        });
-    });
-}
-
-
-
-
 
     // plotly relayout (drag line) - guarded
     if (plotDiv && typeof plotDiv.on === 'function') {
@@ -230,7 +239,6 @@ if (plotTypeRadios && plotTypeRadios.length > 0) {
     }
 
     // --- 3. HELPER FUNCTIONS ---
-
     function populateSelectors(data) {
         console.log("DEBUG: populateSelectors called with data length:", data?.length ?? 0);
         try {
@@ -406,7 +414,6 @@ if (plotTypeRadios && plotTypeRadios.length > 0) {
     }
 
     // --- RENDER FUNCTIONS ---
-
     function renderSummaryTable(summaryData) {
         if (!tableDiv) return;
         if (!summaryData || summaryData.length === 0) {
@@ -512,7 +519,6 @@ if (plotTypeRadios && plotTypeRadios.length > 0) {
                         }
                         const stats = calculateAverageAndStdDev(groupedByCycle);
                         if (showStdDevCheck && showStdDevCheck.checked) {
-                            // convert sampleColor to rgba if possible
                             let fillColor = sampleColor;
                             try {
                                 if (typeof sampleColor === 'string' && sampleColor.startsWith('rgb')) {
@@ -589,11 +595,6 @@ if (plotTypeRadios && plotTypeRadios.length > 0) {
             if (plotDiv) Plotly.react(plotDiv, [], { title: 'Error rendering plot.' });
         }
     }
-
-
-
-
-
 
     function renderLinearityPlot() {
         if (!linearityPlotDiv) return;
@@ -800,23 +801,54 @@ if (plotTypeRadios && plotTypeRadios.length > 0) {
                 return;
             }
 
-            let filteredSummaryData = allSummaryData.filter(row => row && selectedSamples.includes(String(row.Sample)) && selectedTargets.includes(row.Target) );
+            let filteredSummaryData = allSummaryData.filter(row =>
+                row && selectedSamples.includes(String(row.Sample)) && selectedTargets.includes(row.Target)
+            );
             let samplesToShow = selectedSamples;
 
             if (doCtFilter) {
                 console.log("DEBUG: Applying Ct Filter (< 35)");
-                const samplesToKeep = new Set( filteredSummaryData .filter(row => row.MeanCt_raw !== null && isFinite(row.MeanCt_raw) && row.MeanCt_raw < ctCutoff) .map(row => row.Sample) );
-                console.log("DEBUG: Samples to keep after filter:", [...samplesToKeep]);
-                samplesToShow = selectedSamples.filter(s => samplesToKeep.has(String(s)));
+                const samplesToKeep = new Set(
+                    filteredSummaryData
+                        .filter(row => row.MeanCt_raw !== null && isFinite(row.MeanCt_raw) && row.MeanCt_raw < ctCutoff)
+                        .map(row => row.Sample)
+                );
+                console.log("DEBUG: Samples to keep after Ct filter:", [...samplesToKeep]);
+                samplesToShow = samplesToShow.filter(s => samplesToKeep.has(String(s)));
                 filteredSummaryData = filteredSummaryData.filter(row => samplesToKeep.has(String(row.Sample)));
+            }
+
+            // --- NEW: Require ≥2 positive replicates toggle ---
+            if (requireTwoRepCheck && requireTwoRepCheck.checked) {
+                const before = filteredSummaryData.length;
+                filteredSummaryData = filteredSummaryData.filter(row => (row.N ?? 0) >= 2);
+                console.log(`DEBUG: TwoRep filter applied. Rows ${before} -> ${filteredSummaryData.length}`);
+
+                // sync plots: only show samples that still have at least one Target row remaining
+                const keptSamples = new Set(filteredSummaryData.map(r => String(r.Sample)));
+                const samplesBefore = samplesToShow.length;
+                samplesToShow = samplesToShow.filter(s => keptSamples.has(String(s)));
+                console.log(`DEBUG: Samples to show ${samplesBefore} -> ${samplesToShow.length}`);
             }
 
             currentFilteredSummaryData = filteredSummaryData;
             console.log("DEBUG: Filtered Summary Data for Tables:", currentFilteredSummaryData);
             console.log("DEBUG: Samples to Show in Plots:", samplesToShow);
 
-            const appearanceOptions = { plotHeight: parseFloat(plotHeightInput ? plotHeightInput.value : 450) || 450, baseFontSize: parseFloat(fontSizeInput ? fontSizeInput.value : 12) || 12, yMin: parseFloat(yMinInput ? yMinInput.value : NaN), yMax: parseFloat(yMaxInput ? yMaxInput.value : NaN) };
+            const appearanceOptions = {
+                plotHeight: parseFloat(plotHeightInput ? plotHeightInput.value : 450) || 450,
+                baseFontSize: parseFloat(fontSizeInput ? fontSizeInput.value : 12) || 12,
+                yMin: parseFloat(yMinInput ? yMinInput.value : NaN),
+                yMax: parseFloat(yMaxInput ? yMaxInput.value : NaN)
+            };
             console.log("DEBUG: Appearance Options:", appearanceOptions);
+
+            // If nothing remains after filters, show a friendly message
+            if (samplesToShow.length === 0 || currentFilteredSummaryData.length === 0) {
+                if (plotDiv) Plotly.react(plotDiv, [], { title: 'No data to display with current filters (Ct / ≥2 replicates).' });
+                if (tableDiv) tableDiv.innerHTML = '<p>No samples meet the current criteria (Ct filter and/or ≥2 positive replicates).</p>';
+                return;
+            }
 
             renderPlots(samplesToShow, selectedTargets, threshold, source, allSummaryData, appearanceOptions);
             renderSummaryTable(filteredSummaryData);
@@ -835,6 +867,7 @@ if (plotTypeRadios && plotTypeRadios.length > 0) {
         }
     }
 
-    // --- Add initial setup message ---
+    // --- 5. Initial setup message ---
     console.log("DEBUG: Initial setup complete. Waiting for file upload.");
 });
+</script>
